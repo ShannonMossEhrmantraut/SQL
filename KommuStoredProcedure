@@ -1,0 +1,71 @@
+ALTER   PROC [dbo].[GetCartInfo]
+		@userId int
+AS
+/*-----TEST CODE-------
+
+	DECLARE @userId int = 53
+EXECUTE dbo.GetCartInfo @userId
+
+
+@Id = listing Id
+
+SELECT * 
+FROM dbo.Locations --address
+
+SELECT * 
+FROM dbo.ListingReservations --checkin and check out
+
+SELECT *
+FROM dbo.Listings -- title, cost per night, cost per week
+
+SELECT *
+FROM dbo.ReservationStatuses -- Id
+
+SELECT * 
+FROM dbo.Users --userId, email
+
+SELECT *
+FROM dbo.States ---stateId, stateName
+
+SELECT *
+FROM dbo.ListingImages --- images
+
+SELECT * 
+FROM dbo.Files --- files
+
+
+
+*/
+
+
+
+SELECT    l.Id AS ListingId
+		, l.Title
+		, l.CostPerNight
+		, l.CostPerWeek
+		, lo.LineOne
+		, lo.LineTwo
+		, lo.City
+		, s.[Id] as StateId
+		, lo.Zip
+		, lr.DateCheckIn
+		, lr.DateCheckOut
+		, u.Id AS UserId
+		, u.Email
+		,lr.UserId
+		,Images = (SELECT [Url] 
+					FROM dbo.Files as f inner join dbo.ListingImages as li
+					on li.FileId = f.Id
+					WHERE li.ListingId = l.Id
+					For JSON AUTO
+		)
+	FROM dbo.Users AS u INNER JOIN dbo.ListingReservations AS lr
+		on lr.UserId = u.Id
+	INNER JOIN dbo.Listings AS l
+		ON lr.ListingId = l.Id
+	INNER JOIN dbo.Locations AS lo
+		ON lo.Id = l.LocationId
+	LEFT JOIN dbo.States as s
+		ON s.[Id] = lo.StateId
+
+	WHERE @userId = u.Id AND lr.StatusId=1
